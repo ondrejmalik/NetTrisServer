@@ -12,3 +12,4 @@ A:\Projects\TetrisServer\Server\obj\Debug\net8.0\refint\Server.dll
 A:\Projects\TetrisServer\Server\obj\Debug\net8.0\Server.pdb
 A:\Projects\TetrisServer\Server\obj\Debug\net8.0\Server.genruntimeconfig.cache
 A:\Projects\TetrisServer\Server\obj\Debug\net8.0\ref\Server.dll
+A:\Projects\TetrisServer\Server\obj\Debug\net8.0\Server.sourcelink.json
