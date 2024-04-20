@@ -3,6 +3,15 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 
+string portStr;
+int portInt = 8543;
+do
+{
+    Console.WriteLine("Enter port");
+    portStr = Console.ReadLine();
+    if (portStr == "")
+        break;
+} while (!int.TryParse(portStr, out portInt));
 
 Console.WriteLine("Server is Running..");
 HashSet<(int index, UdpClient client, IPEndPoint ipEndPoint)> clients = new();
@@ -12,10 +21,10 @@ while (true)
 {
 //--accepting client
     UdpClient client = new UdpClient();
-    client.Client.Bind(new IPEndPoint(IPAddress.Any, 8543));
+    client.Client.Bind(new IPEndPoint(IPAddress.Any, portInt));
 //--
 
-    var ipEndPoint = new IPEndPoint(IPAddress.Any, 8543);
+    var ipEndPoint = new IPEndPoint(IPAddress.Any, portInt);
 
     var data = client.Receive(ref ipEndPoint);
     client.Close();
