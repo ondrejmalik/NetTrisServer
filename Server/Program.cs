@@ -3,6 +3,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 
+
 Console.WriteLine("Server is Running..");
 HashSet<(int index, UdpClient client, IPEndPoint ipEndPoint)> clients = new();
 object _EnumerationLock = new();
@@ -11,15 +12,15 @@ while (true)
 {
 //--accepting client
     UdpClient client = new UdpClient();
-    client.Client.Bind(new IPEndPoint(IPAddress.Parse("127.0.0.1"), 8543));
+    client.Client.Bind(new IPEndPoint(IPAddress.Any, 8543));
 //--
 
-    var ipEndPoint = new IPEndPoint(IPAddress.Parse("127.0.0.1"), 8543);
+    var ipEndPoint = new IPEndPoint(IPAddress.Any, 8543);
 
     var data = client.Receive(ref ipEndPoint);
     client.Close();
     (int index, UdpClient client, IPEndPoint ipEndPoint) newClient = new();
-    Console.WriteLine($"New Client Connected - {ipEndPoint.Address.ToString()}");
+    Console.WriteLine($"New Client Connected - {ipEndPoint.Address.ToString()} : {ipEndPoint.Port}");
     Console.WriteLine("Current Clients: " + clients.Count); // TODO: need to remove disconnected clients
     newClient.index = index;
     index++;
@@ -27,7 +28,14 @@ while (true)
     newClient.ipEndPoint = ipEndPoint;
     string message = "OK";
     data = Encoding.ASCII.GetBytes(message);
-    newClient.client.Send(data, data.Length, newClient.ipEndPoint);
+    for (int i = 0; i < 5; i++)
+    {
+        newClient.client.Send(data, data.Length, newClient.ipEndPoint);
+        Console.WriteLine(
+            $"Sending OK to {ipEndPoint.Address.ToString()} : {ipEndPoint.Port} from {newClient.client.Client.LocalEndPoint}");
+        Thread.Sleep(32);
+    }
+
     lock (_EnumerationLock)
     {
         clients.Add(newClient);
@@ -67,12 +75,11 @@ void SendLoop(int player1Index, int player2Index)
         }
     }
 
+    s.Start();
     try
     {
         while (true)
         {
-            s.Start();
-
             recieved1 = valueTuple.client.Receive(ref valueTuple.ipEndPoint);
             //Console.WriteLine(Encoding.ASCII.GetString(recieved1)); //-- this is the message from the client1
 
@@ -85,8 +92,8 @@ void SendLoop(int player1Index, int player2Index)
             client2.client.Send(recieved1, recieved1.Length, client2.ipEndPoint);
 
             valueTuple.client.Send(result2, result2.Length, valueTuple.ipEndPoint);
-            s.Stop();
-            Console.WriteLine(s.ElapsedMilliseconds);
+            Console.WriteLine(s.ElapsedMilliseconds + "ms");
+            s.Restart();
         }
     }
     catch (Exception e)
