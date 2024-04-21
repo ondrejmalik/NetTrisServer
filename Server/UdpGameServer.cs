@@ -91,6 +91,7 @@ public class UdpGameServer
 
             lock (_enumerationLock)
             {
+                
                 Clients.Add(newClient);
                 if (_index % 2 == 1)
                 {
