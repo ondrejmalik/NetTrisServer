@@ -10,11 +10,14 @@ public class UdpGameServer
     public HashSet<(int index, UdpClient client, IPEndPoint ipEndPoint)> Clients = new();
     private object _enumerationLock = new();
     private int _index = 0;
-
+    private int _disconnectedClients = 0;
+    private Action _msPrint;
+    public int CurrentCientCount => Clients.Count - _disconnectedClients;
 
     public void Start()
     {
         SetPort();
+        SetMsPrint();
         FindClients();
     }
 
@@ -35,6 +38,28 @@ public class UdpGameServer
         }
     }
 
+    private void SetMsPrint()
+    {
+        bool result = false;
+        do
+        {
+            Console.WriteLine("Print ms? (true/false)");
+            portStr = Console.ReadLine();
+            if (portStr == "")
+                break;
+        } while (!bool.TryParse(portStr, out result));
+
+        if (result)
+        {
+            _msPrint = () => { Console.WriteLine("ms"); };
+        }
+        else
+        {
+            _msPrint = () => { };
+        }
+    }
+
+
     private void FindClients()
     {
         Console.WriteLine("Server is Running..");
@@ -49,16 +74,16 @@ public class UdpGameServer
             client.Close();
             (int index, UdpClient client, IPEndPoint ipEndPoint) newClient = new();
             Console.WriteLine($"New Client Connected - {ipEndPoint.Address.ToString()} : {ipEndPoint.Port}");
-            Console.WriteLine("Current Clients: " + Clients.Count); // TODO: need to remove disconnected clients
             newClient.index = _index;
             _index++;
             newClient.client = new UdpClient();
             newClient.ipEndPoint = ipEndPoint;
             string message = "OK";
             data = Encoding.ASCII.GetBytes(message);
-            for (int i = 0; i < 5; i++)
+            for (int i = 0; i < 5; i++) // send 5 attempts to make sure the client recieves the message
             {
                 newClient.client.Send(data, data.Length, newClient.ipEndPoint);
+                newClient.client.Client.ReceiveTimeout = 5000;
                 Console.WriteLine(
                     $"Sending OK to {ipEndPoint.Address.ToString()} : {ipEndPoint.Port} from {newClient.client.Client.LocalEndPoint}");
                 Thread.Sleep(32);
@@ -73,6 +98,8 @@ public class UdpGameServer
                     thread.Start();
                 }
             }
+
+            Console.WriteLine($"Current Clients: {CurrentCientCount}");
         }
     }
 
@@ -121,12 +148,13 @@ public class UdpGameServer
                 client2.client.Send(recieved1, recieved1.Length, client2.ipEndPoint);
 
                 valueTuple.client.Send(result2, result2.Length, valueTuple.ipEndPoint);
-                Console.WriteLine(s.ElapsedMilliseconds + "ms");
+                _msPrint();
                 s.Restart();
             }
         }
         catch (Exception e)
         {
+            _disconnectedClients += 2;
             Console.WriteLine($"Clients {player1Index} and {player2Index} Disconnected");
         }
     }
